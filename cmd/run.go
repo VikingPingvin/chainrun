@@ -25,9 +25,11 @@ var runCmd = &cobra.Command{
 			if err != nil {
 				return err
 			}
-			for _, step := range runCtx.Steps {
+
+			allSteps := runCtx.Steps
+			for i := range allSteps {
 				cmd.Printf("Step %q: status=%s stdout=%q stderr=%q\n",
-					step.StepID, step.Status, step.Stdout, step.Stderr)
+					allSteps[i].StepID, allSteps[i].Status, allSteps[i].Stdout, allSteps[i].Stderr)
 			}
 		}
 		return nil
