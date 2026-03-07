@@ -1,0 +1,14 @@
+workflows:
+  - name: hello
+    trigger:
+      type: manual
+    steps:
+      - id: greet
+        type: shell
+        command: echo "Hello from ChainRun"
+        timeout: 10s
+      - id: env_check
+        type: shell
+        command: echo "User is {{.Env.USERNAME}}"
+        timeout: 10s
+

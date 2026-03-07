@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/vikingpingvin/chainrun/action"
 	"github.com/vikingpingvin/chainrun/config"
@@ -45,7 +46,15 @@ func New(deps Deps) Engine {
 
 // RunOnce executes the named workflow once with the given trigger event.
 func (e *engine) RunOnce(ctx context.Context, workflowName string, event types.TriggerEvent) (*types.RunContext, error) {
-	panic("not implemented")
+	// slices.Contains(e.deps.Workflows, workflowName)
+	for _, wf := range e.deps.Workflows {
+		if wf.Name == workflowName {
+			runCtx := Build(wf, event, e.deps)
+			err := e.sequencer.Run(ctx, wf, runCtx)
+			return runCtx, err
+		}
+	}
+	return nil, fmt.Errorf("workflow %q not found", workflowName)
 }
 
 // StartDaemon starts all workflow triggers and blocks until ctx is cancelled.
@@ -55,5 +64,9 @@ func (e *engine) StartDaemon(ctx context.Context) error {
 
 // Workflows returns the names of all loaded workflows.
 func (e *engine) Workflows() []string {
-	panic("not implemented")
+	wfNames := make([]string, len(e.deps.Workflows))
+	for i, wf := range e.deps.Workflows {
+		wfNames[i] = wf.Name
+	}
+	return wfNames
 }

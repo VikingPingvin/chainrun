@@ -41,22 +41,23 @@ func main() {
 	trgReg.Register("manual", func(def types.TriggerDef) (trigger.Source, error) { return manual.New(def) })
 	trgReg.Register("webhook", func(def types.TriggerDef) (trigger.Source, error) { return webhook.New(def) })
 
-	cfg, err := cfgLoader.Load("chainrun.yaml")
-	if err != nil {
-		log.Fatalf("failed to load config: %v", err)
+	factory := func(cfgPath string) (engine.Engine, error) {
+		cfg, err := cfgLoader.Load(cfgPath)
+		if err != nil {
+			return nil, err
+		}
+		return engine.New(engine.Deps{
+			Workflows:       cfg.Workflows,
+			ActionRegistry:  actReg,
+			TriggerRegistry: trgReg,
+			Renderer:        renderer,
+			Secrets:         secretsRes,
+			Loader:          cfgLoader,
+			Logger:          newLogger(),
+		}), nil
 	}
 
-	eng := engine.New(engine.Deps{
-		Workflows:       cfg.Workflows,
-		ActionRegistry:  actReg,
-		TriggerRegistry: trgReg,
-		Renderer:        renderer,
-		Secrets:         secretsRes,
-		Loader:          cfgLoader,
-		Logger:          newLogger(),
-	})
-
-	if err := cmd.Execute(eng, cfgLoader); err != nil {
+	if err := cmd.Execute(factory, cfgLoader); err != nil {
 		log.Fatal(err)
 	}
 }

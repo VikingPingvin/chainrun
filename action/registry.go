@@ -20,10 +20,14 @@ func NewRegistry() Registry {
 
 // Register associates typeName with the given factory.
 func (r *mapRegistry) Register(typeName string, factory ExecutorFactory) {
-	panic("not implemented")
+	r.factories[typeName] = factory
 }
 
 // Get returns a new Executor for typeName, or false if not found.
 func (r *mapRegistry) Get(typeName string) (Executor, bool) {
-	panic("not implemented")
+	factory, ok := r.factories[typeName]
+	if !ok {
+		return nil, false
+	}
+	return factory(), true
 }

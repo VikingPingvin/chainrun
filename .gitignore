@@ -13,3 +13,8 @@
 !secrets/**
 !template/**
 !trigger/**
+
+!examples/*
+
+!.schema/
+!.schema/*

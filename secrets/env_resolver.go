@@ -1,19 +1,26 @@
 package secrets
 
-// EnvResolver resolves secrets from environment variables.
+import (
+	"os"
+	"strings"
+)
+
 type EnvResolver struct{}
 
-// NewEnvResolver returns a new EnvResolver.
 func NewEnvResolver() *EnvResolver {
 	return &EnvResolver{}
 }
 
-// Resolve returns the value of the environment variable named by key.
 func (r *EnvResolver) Resolve(key string) (string, bool) {
-	panic("not implemented")
+	v := os.Getenv(key)
+	return v, v != ""
 }
 
-// ResolveAll returns all environment variables as a map.
 func (r *EnvResolver) ResolveAll() map[string]string {
-	panic("not implemented")
+	m := map[string]string{}
+	for _, e := range os.Environ() {
+		k, v, _ := strings.Cut(e, "=")
+		m[k] = v
+	}
+	return m
 }

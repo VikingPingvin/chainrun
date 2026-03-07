@@ -31,8 +31,8 @@ type StepResult struct {
 	Stdout     string
 	Stderr     string
 	ExitCode   int
-	StatusCode int               // HTTP
-	Body       string            // HTTP response / file read
+	StatusCode int    // HTTP
+	Body       string // HTTP response / file read
 	Headers    map[string]string
 	Output     string // LLM / general text
 	Error      string

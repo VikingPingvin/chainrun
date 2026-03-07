@@ -1,0 +1,410 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/vikingpingvin/chainrun/schema/chainrun.json",
+  "title": "ChainRun Workflow Config",
+  "description": "Root configuration for ChainRun workflow definitions.",
+  "type": "object",
+  "required": [
+    "workflows"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "workflows": {
+      "type": "array",
+      "description": "List of workflow definitions.",
+      "items": {
+        "$ref": "#/$defs/WorkflowDef"
+      }
+    }
+  },
+  "$defs": {
+    "WorkflowDef": {
+      "type": "object",
+      "required": [
+        "name",
+        "trigger",
+        "steps"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Unique name for the workflow."
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of the workflow."
+        },
+        "trigger": {
+          "$ref": "#/$defs/TriggerDef"
+        },
+        "steps": {
+          "type": "array",
+          "description": "Ordered list of steps to execute.",
+          "items": {
+            "$ref": "#/$defs/StepDef"
+          }
+        },
+        "on_error": {
+          "$ref": "#/$defs/ErrorPolicy"
+        },
+        "env": {
+          "type": "object",
+          "description": "Workflow-level environment variables.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "TriggerDef": {
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Trigger type.",
+          "enum": [
+            "cron",
+            "manual",
+            "webhook",
+            "watch",
+            "git"
+          ]
+        },
+        "schedule": {
+          "type": "string",
+          "description": "Cron expression (cron trigger only). e.g. '0 * * * *'"
+        },
+        "path": {
+          "type": "string",
+          "description": "File system path to watch (watch trigger only)."
+        },
+        "events": {
+          "type": "array",
+          "description": "File events to watch for (watch trigger only).",
+          "items": {
+            "type": "string",
+            "enum": [
+              "create",
+              "modify",
+              "delete"
+            ]
+          }
+        },
+        "port": {
+          "type": "integer",
+          "description": "Port to listen on (webhook trigger only)."
+        },
+        "route": {
+          "type": "string",
+          "description": "HTTP route path (webhook trigger only). e.g. '/webhook'"
+        },
+        "hook": {
+          "type": "string",
+          "description": "Git hook name (git trigger only). e.g. 'pre-commit', 'post-push'"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "cron"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "schedule"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "watch"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "path"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "webhook"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "port",
+              "route"
+            ]
+          }
+        }
+      ]
+    },
+    "StepDef": {
+      "type": "object",
+      "required": [
+        "id",
+        "type"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for this step. Used to reference outputs and in error policies."
+        },
+        "type": {
+          "type": "string",
+          "description": "Executor type.",
+          "enum": [
+            "shell",
+            "http",
+            "llm",
+            "file",
+            "notify"
+          ]
+        },
+        "continue_on_error": {
+          "type": "boolean",
+          "description": "If true, the workflow continues even if this step fails.",
+          "default": false
+        },
+        "retry": {
+          "$ref": "#/$defs/RetryPolicy"
+        },
+        "timeout": {
+          "type": "string",
+          "description": "Step timeout duration. e.g. '30s', '5m', '1h'",
+          "pattern": "^[0-9]+(ms|s|m|h)$"
+        },
+        "env": {
+          "type": "object",
+          "description": "Step-level environment variables (merged with workflow env).",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "command": {
+          "type": "string",
+          "description": "[shell] Shell command to run."
+        },
+        "shell": {
+          "type": "string",
+          "description": "[shell] Shell interpreter to use.",
+          "enum": [
+            "sh",
+            "bash",
+            "powershell"
+          ]
+        },
+        "url": {
+          "type": "string",
+          "description": "[http] Target URL.",
+          "format": "uri"
+        },
+        "method": {
+          "type": "string",
+          "description": "[http] HTTP method.",
+          "enum": [
+            "GET",
+            "POST",
+            "PUT",
+            "PATCH",
+            "DELETE",
+            "HEAD"
+          ]
+        },
+        "headers": {
+          "type": "object",
+          "description": "[http] HTTP request headers.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "body": {
+          "type": "string",
+          "description": "[http] HTTP request body."
+        },
+        "provider": {
+          "type": "string",
+          "description": "[llm] LLM provider name. e.g. 'openai', 'anthropic'"
+        },
+        "model": {
+          "type": "string",
+          "description": "[llm] Model identifier. e.g. 'gpt-4o', 'claude-sonnet-4-6'"
+        },
+        "prompt": {
+          "type": "string",
+          "description": "[llm] User prompt text. Supports template variables."
+        },
+        "system": {
+          "type": "string",
+          "description": "[llm] System prompt text."
+        },
+        "file_op": {
+          "type": "string",
+          "description": "[file] File operation to perform.",
+          "enum": [
+            "read",
+            "write",
+            "append"
+          ]
+        },
+        "file_path": {
+          "type": "string",
+          "description": "[file] Path to the target file."
+        },
+        "file_content": {
+          "type": "string",
+          "description": "[file] Content to write or append. Supports template variables."
+        },
+        "channel": {
+          "type": "string",
+          "description": "[notify] Notification channel. e.g. 'slack', 'email', 'discord'"
+        },
+        "message": {
+          "type": "string",
+          "description": "[notify] Notification message. Supports template variables."
+        },
+        "to": {
+          "type": "string",
+          "description": "[notify] Recipient address or channel ID."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "shell"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "command"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "http"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "url",
+              "method"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "llm"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "provider",
+              "model",
+              "prompt"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "file"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "file_op",
+              "file_path"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "notify"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "channel",
+              "message"
+            ]
+          }
+        }
+      ]
+    },
+    "RetryPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "attempts": {
+          "type": "integer",
+          "description": "Number of retry attempts.",
+          "minimum": 1
+        },
+        "delay": {
+          "type": "string",
+          "description": "Delay between retries. e.g. '5s', '1m'",
+          "pattern": "^[0-9]+(ms|s|m|h)$"
+        },
+        "backoff": {
+          "type": "string",
+          "description": "Backoff strategy.",
+          "enum": [
+            "fixed",
+            "exponential"
+          ]
+        }
+      }
+    },
+    "ErrorPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "strategy": {
+          "type": "string",
+          "description": "What to do when the workflow encounters an error.",
+          "enum": [
+            "stop",
+            "continue",
+            "notify"
+          ],
+          "default": "stop"
+        },
+        "notify_id": {
+          "type": "string",
+          "description": "Step ID of a notify step to invoke on error (used when strategy is 'notify')."
+        }
+      }
+    }
+  }
+}

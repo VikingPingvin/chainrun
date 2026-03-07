@@ -2,75 +2,75 @@ package types
 
 // WorkflowDef is the top-level workflow definition loaded from a config file.
 type WorkflowDef struct {
-	Name        string
-	Description string
-	Trigger     TriggerDef
-	Steps       []StepDef
-	OnError     ErrorPolicy
-	Env         map[string]string
+	Name        string            `yaml:"name"`
+	Description string            `yaml:"description"`
+	Trigger     TriggerDef        `yaml:"trigger"`
+	Steps       []StepDef         `yaml:"steps"`
+	OnError     ErrorPolicy       `yaml:"on_error"`
+	Env         map[string]string `yaml:"env"`
 }
 
 // TriggerDef describes how a workflow is triggered.
 type TriggerDef struct {
-	Type     string   // "cron" | "manual" | "webhook" | "watch" | "git"
-	Schedule string   // cron only
-	Path     string   // watch only
-	Events   []string // watch: ["create","modify","delete"]
-	Port     int      // webhook only
-	Route    string   // webhook only
-	Hook     string   // git only
+	Type     string   `yaml:"type"`     // "cron" | "manual" | "webhook" | "watch" | "git"
+	Schedule string   `yaml:"schedule"` // cron only
+	Path     string   `yaml:"path"`     // watch only
+	Events   []string `yaml:"events"`   // watch: ["create","modify","delete"]
+	Port     int      `yaml:"port"`     // webhook only
+	Route    string   `yaml:"route"`    // webhook only
+	Hook     string   `yaml:"hook"`     // git only
 }
 
 // StepDef describes a single step in a workflow.
 type StepDef struct {
-	ID              string
-	Type            string // "shell" | "http" | "llm" | "file" | "notify"
-	ContinueOnError bool
-	Retry           RetryPolicy
-	Timeout         string            // e.g. "30s", "5m"
-	Env             map[string]string
+	ID              string            `yaml:"id"`
+	Type            string            `yaml:"type"` // "shell" | "http" | "llm" | "file" | "notify"
+	ContinueOnError bool              `yaml:"continue_on_error"`
+	Retry           RetryPolicy       `yaml:"retry"`
+	Timeout         string            `yaml:"timeout"` // e.g. "30s", "5m"
+	Env             map[string]string `yaml:"env"`
 
 	// Shell
-	Command string
-	Shell   string // "sh" | "bash" | "powershell"
+	Command string `yaml:"command"`
+	Shell   string `yaml:"shell"` // "sh" | "bash" | "powershell"
 
 	// HTTP
-	URL     string
-	Method  string
-	Headers map[string]string
-	Body    string
+	URL     string            `yaml:"url"`
+	Method  string            `yaml:"method"`
+	Headers map[string]string `yaml:"headers"`
+	Body    string            `yaml:"body"`
 
 	// LLM
-	Provider string
-	Model    string
-	Prompt   string
-	System   string
+	Provider string `yaml:"provider"`
+	Model    string `yaml:"model"`
+	Prompt   string `yaml:"prompt"`
+	System   string `yaml:"system"`
 
 	// File
-	FileOp      string // "read" | "write" | "append"
-	FilePath    string
-	FileContent string
+	FileOp      string `yaml:"file_op"` // "read" | "write" | "append"
+	FilePath    string `yaml:"file_path"`
+	FileContent string `yaml:"file_content"`
 
 	// Notify
-	Channel string
-	Message string
-	To      string
+	Channel string `yaml:"channel"`
+	Message string `yaml:"message"`
+	To      string `yaml:"to"`
 }
 
 // RetryPolicy controls retry behaviour for a step.
 type RetryPolicy struct {
-	Attempts int
-	Delay    string // e.g. "5s"
-	Backoff  string // "fixed" | "exponential"
+	Attempts int    `yaml:"attempts"`
+	Delay    string `yaml:"delay"`   // e.g. "5s"
+	Backoff  string `yaml:"backoff"` // "fixed" | "exponential"
 }
 
 // ErrorPolicy controls what happens when a workflow-level error occurs.
 type ErrorPolicy struct {
-	Strategy string // "stop" (default) | "continue" | "notify"
-	NotifyID string // step ID to invoke on error
+	Strategy string `yaml:"strategy"`  // "stop" (default) | "continue" | "notify"
+	NotifyID string `yaml:"notify_id"` // step ID to invoke on error
 }
 
 // Config is the root configuration structure loaded from a config file.
 type Config struct {
-	Workflows []WorkflowDef
+	Workflows []WorkflowDef `yaml:"workflows"`
 }

@@ -22,10 +22,20 @@ func NewRegistry() Registry {
 
 // Register associates typeName with the given factory.
 func (r *mapRegistry) Register(typeName string, factory SourceFactory) {
-	panic("not implemented")
+	r.factories[typeName] = factory
 }
 
 // Get constructs and returns a Source for the given typeName and def.
 func (r *mapRegistry) Get(typeName string, def types.TriggerDef) (Source, bool) {
-	panic("not implemented")
+	factory, ok := r.factories[typeName]
+	if !ok {
+		// TODO: consider returning an error instead of bool for better diagnostics
+		// and implement proper logging
+		return nil, false
+	}
+	src, err := factory(def)
+	if err != nil {
+		return nil, false
+	}
+	return src, true
 }

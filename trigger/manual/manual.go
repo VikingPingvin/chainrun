@@ -2,6 +2,7 @@ package manual
 
 import (
 	"context"
+	"time"
 
 	"github.com/vikingpingvin/chainrun/internal/types"
 )
@@ -13,12 +14,21 @@ type Source struct {
 
 // New constructs a manual Source from a TriggerDef.
 func New(def types.TriggerDef) (*Source, error) {
-	panic("not implemented")
+	return &Source{def: def}, nil
 }
 
 // Start fires one event and closes the channel.
 func (s *Source) Start(ctx context.Context) (<-chan types.TriggerEvent, error) {
-	panic("not implemented")
+	ch := make(chan types.TriggerEvent, 1)
+	go func() {
+		defer close(ch)
+		ch <- types.TriggerEvent{
+			Type:    s.Name(),
+			FiredAt: time.Now(),
+		}
+	}()
+
+	return ch, nil
 }
 
 // Stop is a no-op for the manual trigger.
