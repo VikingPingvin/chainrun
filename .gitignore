@@ -1,0 +1,15 @@
+*.*
+
+!go.mod
+!go.sum
+!.gitignore
+
+!main.go
+!action/**
+!cmd/**
+!internal/**
+!config/**
+!engine/**
+!secrets/**
+!template/**
+!trigger/**
