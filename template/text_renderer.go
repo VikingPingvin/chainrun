@@ -3,6 +3,7 @@ package template
 import (
 	"bytes"
 	"text/template"
+	"time"
 
 	"github.com/vikingpingvin/chainrun/internal/types"
 )
@@ -11,13 +12,11 @@ import (
 // Template data exposes: .Steps.*, .Env.*, .Trigger.*
 type TextRenderer struct{}
 
-// TODO:  Trigger field type — types.TriggerEvent has a Payload map[string]interface{} field.
-//
-// Templates can navigate into it with {{.Trigger.Payload.someKey}}, but only if the key is a string.
 type renderData struct {
 	Env     map[string]string
 	Steps   map[string]types.StepResult
 	Trigger types.TriggerEvent
+	Time    time.Time
 }
 
 // NewRenderer returns a new TextRenderer.
@@ -31,6 +30,7 @@ func (r *TextRenderer) Render(tmpl string, ctx *types.RunContext) (string, error
 		Env:     ctx.Env,
 		Steps:   ctx.Steps,
 		Trigger: ctx.TriggerEvent,
+		Time:    time.Now(),
 	}
 
 	tmplObj, err := template.New("").Parse(tmpl)

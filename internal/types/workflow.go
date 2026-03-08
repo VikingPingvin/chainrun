@@ -12,14 +12,24 @@ type WorkflowDef struct {
 
 // TriggerDef describes how a workflow is triggered.
 type TriggerDef struct {
-	Type     string   `yaml:"type"`     // "cron" | "manual" | "webhook" | "watch" | "git"
-	Schedule string   `yaml:"schedule"` // cron only
-	Path     string   `yaml:"path"`     // watch only
-	Events   []string `yaml:"events"`   // watch: ["create","modify","delete"]
-	Port     int      `yaml:"port"`     // webhook only
-	Route    string   `yaml:"route"`    // webhook only
-	Hook     string   `yaml:"hook"`     // git only
+	Type     TriggerType `yaml:"type"`     // "cron" | "manual" | "webhook" | "watch" | "git"
+	Schedule string      `yaml:"schedule"` // cron only
+	Path     string      `yaml:"path"`     // watch only
+	Events   []string    `yaml:"events"`   // watch: ["create","modify","delete"]
+	Port     int         `yaml:"port"`     // webhook only
+	Route    string      `yaml:"route"`    // webhook only
+	Hook     string      `yaml:"hook"`     // git only
 }
+
+type TriggerType string
+
+const (
+	Cron    TriggerType = "cron"
+	Manual  TriggerType = "manual"
+	Webhook TriggerType = "webhook"
+	Watch   TriggerType = "watch"
+	Git     TriggerType = "git"
+)
 
 // StepDef describes a single step in a workflow.
 type StepDef struct {
@@ -47,15 +57,23 @@ type StepDef struct {
 	System   string `yaml:"system"`
 
 	// File
-	FileOp      string `yaml:"file_op"` // "read" | "write" | "append"
-	FilePath    string `yaml:"file_path"`
-	FileContent string `yaml:"file_content"`
+	FileOp      FileOperationType `yaml:"file_op"`
+	FilePath    string            `yaml:"file_path"`
+	FileContent string            `yaml:"file_content"`
 
 	// Notify
 	Channel string `yaml:"channel"`
 	Message string `yaml:"message"`
 	To      string `yaml:"to"`
 }
+
+type FileOperationType string
+
+const (
+	FileRead   FileOperationType = "read"
+	FileWrite  FileOperationType = "write"
+	FileAppend FileOperationType = "append"
+)
 
 // RetryPolicy controls retry behaviour for a step.
 type RetryPolicy struct {

@@ -28,7 +28,7 @@ var runCmd = &cobra.Command{
 
 			allSteps := runCtx.Steps
 			for i := range allSteps {
-				cmd.Printf("Step %q: status=%s stdout=%q stderr=%q\n",
+				runCtx.Logger.Info("Step %q: status=%s stdout=%q stderr=%q\n",
 					allSteps[i].StepID, allSteps[i].Status, allSteps[i].Stdout, allSteps[i].Stderr)
 			}
 		}

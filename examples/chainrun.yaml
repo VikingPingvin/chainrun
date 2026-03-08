@@ -11,4 +11,11 @@ workflows:
         type: shell
         command: echo "User is {{.Env.USERNAME}}"
         timeout: 10s
-
+      - id: write_file
+        type: file
+        file_op: write
+        file_path: "output.txt"
+        file_content: |-
+          This file is created by ChainRun at: {{.Time}}
+          The trigger event is: {{.Trigger.Type}}
+          The greeting step output is: {{ .Steps.greet.Stdout}}
