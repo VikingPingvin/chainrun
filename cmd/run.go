@@ -20,8 +20,8 @@ var runCmd = &cobra.Command{
 		}
 
 		event := types.TriggerEvent{Type: "manual", FiredAt: time.Now()}
-		for _, name := range names {
-			runCtx, err := eng.RunOnce(cmd.Context(), name, event)
+		for i := range names {
+			runCtx, err := eng.RunOnce(cmd.Context(), names[i], event)
 			if err != nil {
 				return err
 			}

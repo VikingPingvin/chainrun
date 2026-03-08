@@ -65,8 +65,8 @@ func (e *engine) StartDaemon(ctx context.Context) error {
 // Workflows returns the names of all loaded workflows.
 func (e *engine) Workflows() []string {
 	wfNames := make([]string, len(e.deps.Workflows))
-	for i, wf := range e.deps.Workflows {
-		wfNames[i] = wf.Name
+	for i := range e.deps.Workflows {
+		wfNames[i] = e.deps.Workflows[i].Name
 	}
 	return wfNames
 }
