@@ -4,6 +4,8 @@
 !go.sum
 !.gitignore
 
+!README.md
+
 !main.go
 !action/**
 !cmd/**
