@@ -31,14 +31,14 @@ workflows:
       FOO: bar
     steps:
       - id: greet
-        type: shell
-        command: echo hello
         timeout: 10s
         continue_on_error: true
         retry:
           attempts: 3
           delay: 2s
           backoff: exponential
+        shell:
+          command: echo hello
 `
 	cfg, err := NewYAMLLoader().Load(writeTemp(t, yaml))
 	if err != nil {
@@ -74,16 +74,16 @@ workflows:
       type: manual
     steps:
       - id: s1
-        type: shell
-        command: echo alpha
+        shell:
+          command: echo alpha
   - name: beta
     trigger:
       type: cron
       schedule: "0 * * * *"
     steps:
       - id: s1
-        type: shell
-        command: echo beta
+        shell:
+          command: echo beta
 `
 	cfg, err := NewYAMLLoader().Load(writeTemp(t, yaml))
 	if err != nil {
@@ -141,8 +141,8 @@ func TestValidate_Valid(t *testing.T) {
 				Name:    "hello",
 				Trigger: types.TriggerDef{Type: "manual"},
 				Steps: []types.StepDef{
-					{ID: "s1", Type: "shell"},
-					{ID: "s2", Type: "http"},
+					{ID: "s1", Shell: &types.ShellStep{Command: "echo hi"}},
+					{ID: "s2", HTTP: &types.HTTPStep{URL: "http://example.com"}},
 				},
 			},
 		},
@@ -156,7 +156,7 @@ func TestValidate_Valid(t *testing.T) {
 func TestValidate_MissingWorkflowName(t *testing.T) {
 	cfg := &types.Config{
 		Workflows: []types.WorkflowDef{
-			{Trigger: types.TriggerDef{Type: "manual"}, Steps: []types.StepDef{{ID: "s1", Type: "shell"}}},
+			{Trigger: types.TriggerDef{Type: "manual"}, Steps: []types.StepDef{{ID: "s1", Shell: &types.ShellStep{Command: "echo hi"}}}},
 		},
 	}
 	assertFieldError(t, NewYAMLLoader().Validate(cfg), "workflows[0].name")
@@ -166,7 +166,7 @@ func TestValidate_DuplicateWorkflowName(t *testing.T) {
 	wf := types.WorkflowDef{
 		Name:    "dup",
 		Trigger: types.TriggerDef{Type: "manual"},
-		Steps:   []types.StepDef{{ID: "s1", Type: "shell"}},
+		Steps:   []types.StepDef{{ID: "s1", Shell: &types.ShellStep{Command: "echo hi"}}},
 	}
 	cfg := &types.Config{Workflows: []types.WorkflowDef{wf, wf}}
 	assertFieldError(t, NewYAMLLoader().Validate(cfg), "workflows[1].name")
@@ -175,7 +175,7 @@ func TestValidate_DuplicateWorkflowName(t *testing.T) {
 func TestValidate_MissingTriggerType(t *testing.T) {
 	cfg := &types.Config{
 		Workflows: []types.WorkflowDef{
-			{Name: "hello", Steps: []types.StepDef{{ID: "s1", Type: "shell"}}},
+			{Name: "hello", Steps: []types.StepDef{{ID: "s1", Shell: &types.ShellStep{Command: "echo hi"}}}},
 		},
 	}
 	assertFieldError(t, NewYAMLLoader().Validate(cfg), "workflows[0].trigger.type")
@@ -187,7 +187,7 @@ func TestValidate_MissingStepID(t *testing.T) {
 			{
 				Name:    "hello",
 				Trigger: types.TriggerDef{Type: "manual"},
-				Steps:   []types.StepDef{{Type: "shell"}},
+				Steps:   []types.StepDef{{Shell: &types.ShellStep{Command: "echo hi"}}},
 			},
 		},
 	}
@@ -204,7 +204,7 @@ func TestValidate_MissingStepType(t *testing.T) {
 			},
 		},
 	}
-	assertFieldError(t, NewYAMLLoader().Validate(cfg), "workflows[0].steps[0].type")
+	assertFieldError(t, NewYAMLLoader().Validate(cfg), "workflows[0].steps[0]")
 }
 
 func TestValidate_DuplicateStepID(t *testing.T) {
@@ -214,8 +214,8 @@ func TestValidate_DuplicateStepID(t *testing.T) {
 				Name:    "hello",
 				Trigger: types.TriggerDef{Type: "manual"},
 				Steps: []types.StepDef{
-					{ID: "dup", Type: "shell"},
-					{ID: "dup", Type: "http"},
+					{ID: "dup", Shell: &types.ShellStep{Command: "echo hi"}},
+					{ID: "dup", HTTP: &types.HTTPStep{URL: "http://example.com"}},
 				},
 			},
 		},
@@ -226,7 +226,7 @@ func TestValidate_DuplicateStepID(t *testing.T) {
 func TestValidate_MultipleErrors(t *testing.T) {
 	cfg := &types.Config{
 		Workflows: []types.WorkflowDef{
-			// missing name, missing trigger type, step missing id and type
+			// missing name, missing trigger type, step missing id and executor block
 			{Steps: []types.StepDef{{}}},
 		},
 	}

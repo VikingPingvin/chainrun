@@ -10,7 +10,7 @@ import (
 
 func TestExecute_Success(t *testing.T) {
 	e := New()
-	step := types.StepDef{ID: "greet", Command: "echo hello"}
+	step := types.StepDef{ID: "greet", Shell: &types.ShellStep{Command: "echo hello"}}
 
 	result, err := e.Execute(context.Background(), step, &types.RunContext{})
 	if err != nil {
@@ -35,7 +35,7 @@ func TestExecute_Success(t *testing.T) {
 
 func TestExecute_NonZeroExit(t *testing.T) {
 	e := New()
-	step := types.StepDef{ID: "fail", Command: "exit 1"}
+	step := types.StepDef{ID: "fail", Shell: &types.ShellStep{Command: "exit 1"}}
 
 	result, err := e.Execute(context.Background(), step, &types.RunContext{})
 	if err != nil {

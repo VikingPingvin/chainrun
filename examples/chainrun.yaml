@@ -4,18 +4,21 @@ workflows:
       type: manual
     steps:
       - id: greet
-        type: shell
-        command: echo "Hello from ChainRun"
         timeout: 10s
+        shell:
+          command: echo "Hello from ChainRun"
+
       - id: env_check
-        type: shell
-        command: echo "User is {{.Env.USERNAME}}"
         timeout: 10s
+        shell:
+          command: echo "User is {{.Env.USERNAME}}"
+
       - id: write_file
-        type: file
-        file_op: write
-        file_path: "output.txt"
-        file_content: |-
-          This file is created by ChainRun at: {{.Time}}
-          The trigger event is: {{.Trigger.Type}}
-          The greeting step output is: {{ .Steps.greet.Stdout}}
+        timeout: 10s
+        file:
+          op: write
+          path: "output.txt"
+          content: |-
+            This file is created by ChainRun at: {{.Time}}
+            The trigger event is: {{.Trigger.Type}}
+            The greeting step output is: {{ .Steps.greet.Stdout}}

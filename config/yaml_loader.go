@@ -64,8 +64,11 @@ func (l *YAMLLoader) Validate(cfg *types.Config) []ValidationError {
 				stepIDs[step.ID] = true
 			}
 
-			if step.Type == "" {
-				errs = append(errs, ValidationError{Field: sp + ".type", Message: "must not be empty"})
+			if step.ActionType() == "" {
+				errs = append(errs, ValidationError{
+					Field:   fmt.Sprintf("workflows[%d].steps[%d]", i, j),
+					Message: "step must have exactly one executor block (shell, http, llm, file, notify)",
+				})
 			}
 		}
 	}

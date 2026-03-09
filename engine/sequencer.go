@@ -45,9 +45,9 @@ func (s *sequencer) runStep(ctx context.Context, step types.StepDef, runCtx *typ
 		return fmt.Errorf("step %q: render failed: %w", step.ID, err)
 	}
 
-	executor, ok := s.deps.ActionRegistry.Get(rendered.Type)
+	executor, ok := s.deps.ActionRegistry.Get(rendered.ActionType())
 	if !ok {
-		return fmt.Errorf("step %q: unknown action type %q", step.ID, rendered.Type)
+		return fmt.Errorf("step %q: unknown action type %q", step.ID, rendered.ActionType())
 	}
 
 	runCtx.Steps[step.ID] = types.StepResult{
@@ -87,35 +87,81 @@ func (s *sequencer) stepContext(ctx context.Context, timeout string) (context.Co
 
 // renderStep returns a copy of step with all template fields resolved against runCtx.
 func (s *sequencer) renderStep(step types.StepDef, runCtx *types.RunContext) (types.StepDef, error) {
-	r := s.deps.Renderer
+	rendered := step
 
-	fields := []*string{
-		&step.Command, &step.URL, &step.Body,
-		&step.Prompt, &step.System,
-		&step.Message, &step.FilePath, &step.FileContent,
-	}
-	for _, f := range fields {
-		rendered, err := r.Render(*f, runCtx)
-		if err != nil {
-			return step, err
+	if step.Shell != nil {
+		shell := *step.Shell
+		var err error
+		if shell.Command, err = s.deps.Renderer.Render(shell.Command, runCtx); err != nil {
+			return rendered, err
 		}
-		*f = rendered
+		rendered.Shell = &shell
 	}
 
-	if len(step.Headers) > 0 {
-		rendered, err := r.RenderMap(step.Headers, runCtx)
-		if err != nil {
-			return step, err
+	if step.HTTP != nil {
+		h := *step.HTTP
+		var err error
+		if h.URL, err = s.deps.Renderer.Render(h.URL, runCtx); err != nil {
+			return rendered, err
 		}
-		step.Headers = rendered
-	}
-	if len(step.Env) > 0 {
-		rendered, err := r.RenderMap(step.Env, runCtx)
-		if err != nil {
-			return step, err
+		if h.Body, err = s.deps.Renderer.Render(h.Body, runCtx); err != nil {
+			return rendered, err
 		}
-		step.Env = rendered
+		renderedHeaders := make(map[string]string, len(h.Headers))
+		for k, v := range h.Headers {
+			rv, err := s.deps.Renderer.Render(v, runCtx)
+			if err != nil {
+				return rendered, err
+			}
+			renderedHeaders[k] = rv
+		}
+		h.Headers = renderedHeaders
+		rendered.HTTP = &h
 	}
 
-	return step, nil
+	if step.LLM != nil {
+		l := *step.LLM
+		var err error
+		if l.Prompt, err = s.deps.Renderer.Render(l.Prompt, runCtx); err != nil {
+			return rendered, err
+		}
+		if l.System, err = s.deps.Renderer.Render(l.System, runCtx); err != nil {
+			return rendered, err
+		}
+		rendered.LLM = &l
+	}
+
+	if step.File != nil {
+		f := *step.File
+		var err error
+		if f.Path, err = s.deps.Renderer.Render(f.Path, runCtx); err != nil {
+			return rendered, err
+		}
+		if f.Content, err = s.deps.Renderer.Render(f.Content, runCtx); err != nil {
+			return rendered, err
+		}
+		rendered.File = &f
+	}
+
+	if step.Notify != nil {
+		n := *step.Notify
+		var err error
+		if n.Message, err = s.deps.Renderer.Render(n.Message, runCtx); err != nil {
+			return rendered, err
+		}
+		rendered.Notify = &n
+	}
+
+	// render Env map
+	renderedEnv := make(map[string]string, len(step.Env))
+	for k, v := range step.Env {
+		rv, err := s.deps.Renderer.Render(v, runCtx)
+		if err != nil {
+			return rendered, err
+		}
+		renderedEnv[k] = rv
+	}
+	rendered.Env = renderedEnv
+
+	return rendered, nil
 }

@@ -31,40 +31,75 @@ const (
 	Git     TriggerType = "git"
 )
 
+// ShellStep holds configuration for a shell executor step.
+type ShellStep struct {
+	Command string `yaml:"command"`
+	Shell   string `yaml:"shell"`
+}
+
+// HTTPStep holds configuration for an HTTP executor step.
+type HTTPStep struct {
+	URL     string            `yaml:"url"`
+	Method  string            `yaml:"method"`
+	Headers map[string]string `yaml:"headers"`
+	Body    string            `yaml:"body"`
+}
+
+// LLMStep holds configuration for an LLM executor step.
+type LLMStep struct {
+	Provider string `yaml:"provider"`
+	Model    string `yaml:"model"`
+	Prompt   string `yaml:"prompt"`
+	System   string `yaml:"system"`
+}
+
+// FileStep holds configuration for a file executor step.
+type FileStep struct {
+	Op      FileOperationType `yaml:"op"`
+	Path    string            `yaml:"path"`
+	Content string            `yaml:"content"`
+}
+
+// NotifyStep holds configuration for a notify executor step.
+type NotifyStep struct {
+	Channel string `yaml:"channel"`
+	Message string `yaml:"message"`
+	To      string `yaml:"to"`
+}
+
 // StepDef describes a single step in a workflow.
 type StepDef struct {
+	// Global
 	ID              string            `yaml:"id"`
-	Type            string            `yaml:"type"` // "shell" | "http" | "llm" | "file" | "notify"
 	ContinueOnError bool              `yaml:"continue_on_error"`
 	Retry           RetryPolicy       `yaml:"retry"`
 	Timeout         string            `yaml:"timeout"` // e.g. "30s", "5m"
 	Env             map[string]string `yaml:"env"`
 
-	// Shell
-	Command string `yaml:"command"`
-	Shell   string `yaml:"shell"` // "sh" | "bash" | "powershell"
+	// Executor blocks (exactly one should be set)
+	Shell  *ShellStep  `yaml:"shell"`
+	HTTP   *HTTPStep   `yaml:"http"`
+	LLM    *LLMStep    `yaml:"llm"`
+	File   *FileStep   `yaml:"file"`
+	Notify *NotifyStep `yaml:"notify"`
+}
 
-	// HTTP
-	URL     string            `yaml:"url"`
-	Method  string            `yaml:"method"`
-	Headers map[string]string `yaml:"headers"`
-	Body    string            `yaml:"body"`
-
-	// LLM
-	Provider string `yaml:"provider"`
-	Model    string `yaml:"model"`
-	Prompt   string `yaml:"prompt"`
-	System   string `yaml:"system"`
-
-	// File
-	FileOp      FileOperationType `yaml:"file_op"`
-	FilePath    string            `yaml:"file_path"`
-	FileContent string            `yaml:"file_content"`
-
-	// Notify
-	Channel string `yaml:"channel"`
-	Message string `yaml:"message"`
-	To      string `yaml:"to"`
+// ActionType returns the name of the executor block that is set on this step.
+func (s StepDef) ActionType() string {
+	switch {
+	case s.Shell != nil:
+		return "shell"
+	case s.HTTP != nil:
+		return "http"
+	case s.LLM != nil:
+		return "llm"
+	case s.File != nil:
+		return "file"
+	case s.Notify != nil:
+		return "notify"
+	default:
+		return ""
+	}
 }
 
 type FileOperationType string

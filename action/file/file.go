@@ -20,9 +20,9 @@ func New(renderer template.Renderer) *Executor {
 
 // Execute performs the file operation defined in step.
 func (e *Executor) Execute(ctx context.Context, step types.StepDef, run *types.RunContext) (types.StepResult, error) {
-	switch step.FileOp {
+	switch step.File.Op {
 	case "write":
-		return e.writeFile(ctx, step, step.FilePath, step.FileContent)
+		return e.writeFile(ctx, step, step.File.Path, step.File.Content)
 	}
 
 	return types.StepResult{

@@ -24,9 +24,9 @@ func New() *Executor {
 // does not produce a Go error. A Go error is only returned for hard failures
 // (binary not found, context cancelled before the process starts, etc.).
 func (e *Executor) Execute(ctx context.Context, step types.StepDef, run *types.RunContext) (types.StepResult, error) {
-	binary, flag := resolveShell(step.Shell)
+	binary, flag := resolveShell(step.Shell.Shell)
 
-	cmd := exec.CommandContext(ctx, binary, flag, step.Command)
+	cmd := exec.CommandContext(ctx, binary, flag, step.Shell.Command)
 
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
