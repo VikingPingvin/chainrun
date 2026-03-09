@@ -85,6 +85,16 @@ func (s *sequencer) stepContext(ctx context.Context, timeout string) (context.Co
 	return context.WithTimeout(ctx, d)
 }
 
+// dryRun renders all template fields for each step without executing any of them.
+func (s *sequencer) dryRun(_ context.Context, def types.WorkflowDef, runCtx *types.RunContext) error {
+	for _, step := range def.Steps {
+		if _, err := s.renderStep(step, runCtx); err != nil {
+			return fmt.Errorf("step %q: render failed: %w", step.ID, err)
+		}
+	}
+	return nil
+}
+
 // renderStep returns a copy of step with all template fields resolved against runCtx.
 func (s *sequencer) renderStep(step types.StepDef, runCtx *types.RunContext) (types.StepDef, error) {
 	rendered := step

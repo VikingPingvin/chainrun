@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/vikingpingvin/chainrun/action"
@@ -58,7 +60,8 @@ func main() {
 	}
 
 	if err := cmd.Execute(factory, cfgLoader); err != nil {
-		log.Fatal(err)
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		os.Exit(1)
 	}
 }
 

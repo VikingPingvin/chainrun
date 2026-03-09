@@ -16,7 +16,8 @@ var (
 var rootCmd = &cobra.Command{
 	Use:          "chainrun",
 	Short:        "ChainRun — workflow automation engine",
-	SilenceUsage: true,
+	SilenceUsage:  true,
+	SilenceErrors: true,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		built, err := engineFactory(configPath)
 		if err != nil {

@@ -15,6 +15,7 @@ import (
 // Engine orchestrates workflow execution.
 type Engine interface {
 	RunOnce(ctx context.Context, workflowName string, event types.TriggerEvent) (*types.RunContext, error)
+	DryRun(ctx context.Context, workflowName string, event types.TriggerEvent) error
 	StartDaemon(ctx context.Context) error
 	Workflows() []string
 }
@@ -55,6 +56,17 @@ func (e *engine) RunOnce(ctx context.Context, workflowName string, event types.T
 		}
 	}
 	return nil, fmt.Errorf("workflow %q not found", workflowName)
+}
+
+// DryRun renders all template fields for the named workflow without executing any steps.
+func (e *engine) DryRun(ctx context.Context, workflowName string, event types.TriggerEvent) error {
+	for _, wf := range e.deps.Workflows {
+		if wf.Name == workflowName {
+			runCtx := Build(wf, event, e.deps)
+			return e.sequencer.dryRun(ctx, wf, runCtx)
+		}
+	}
+	return fmt.Errorf("workflow %q not found", workflowName)
 }
 
 // StartDaemon starts all workflow triggers and blocks until ctx is cancelled.
