@@ -157,25 +157,13 @@
     "StepDef": {
       "type": "object",
       "required": [
-        "id",
-        "type"
+        "id"
       ],
       "additionalProperties": false,
       "properties": {
         "id": {
           "type": "string",
           "description": "Unique identifier for this step. Used to reference outputs and in error policies."
-        },
-        "type": {
-          "type": "string",
-          "description": "Executor type.",
-          "enum": [
-            "shell",
-            "http",
-            "llm",
-            "file",
-            "notify"
-          ]
         },
         "continue_on_error": {
           "type": "boolean",
@@ -197,27 +185,67 @@
             "type": "string"
           }
         },
+        "shell": {
+          "$ref": "#/$defs/ShellStep"
+        },
+        "http": {
+          "$ref": "#/$defs/HTTPStep"
+        },
+        "llm": {
+          "$ref": "#/$defs/LLMStep"
+        },
+        "file": {
+          "$ref": "#/$defs/FileStep"
+        },
+        "notify": {
+          "$ref": "#/$defs/NotifyStep"
+        }
+      },
+      "oneOf": [
+        { "required": ["shell"] },
+        { "required": ["http"] },
+        { "required": ["llm"] },
+        { "required": ["file"] },
+        { "required": ["notify"] }
+      ]
+    },
+    "ShellStep": {
+      "type": "object",
+      "required": [
+        "command"
+      ],
+      "additionalProperties": false,
+      "properties": {
         "command": {
           "type": "string",
-          "description": "[shell] Shell command to run."
+          "description": "Shell command to run. Supports template variables."
         },
         "shell": {
           "type": "string",
-          "description": "[shell] Shell interpreter to use.",
+          "description": "Shell interpreter to use. Defaults to the OS default (cmd on Windows, sh elsewhere).",
           "enum": [
             "sh",
             "bash",
             "powershell"
           ]
-        },
+        }
+      }
+    },
+    "HTTPStep": {
+      "type": "object",
+      "required": [
+        "url"
+      ],
+      "additionalProperties": false,
+      "properties": {
         "url": {
           "type": "string",
-          "description": "[http] Target URL.",
+          "description": "Target URL. Supports template variables.",
           "format": "uri"
         },
         "method": {
           "type": "string",
-          "description": "[http] HTTP method.",
+          "description": "HTTP method. Defaults to GET.",
           "enum": [
             "GET",
             "POST",
@@ -225,142 +253,97 @@
             "PATCH",
             "DELETE",
             "HEAD"
-          ]
+          ],
+          "default": "GET"
         },
         "headers": {
           "type": "object",
-          "description": "[http] HTTP request headers.",
+          "description": "HTTP request headers. Values support template variables.",
           "additionalProperties": {
             "type": "string"
           }
         },
         "body": {
           "type": "string",
-          "description": "[http] HTTP request body."
-        },
+          "description": "HTTP request body. Supports template variables."
+        }
+      }
+    },
+    "LLMStep": {
+      "type": "object",
+      "required": [
+        "provider",
+        "model",
+        "prompt"
+      ],
+      "additionalProperties": false,
+      "properties": {
         "provider": {
           "type": "string",
-          "description": "[llm] LLM provider name. e.g. 'openai', 'anthropic'"
+          "description": "LLM provider name. e.g. 'openai', 'anthropic'"
         },
         "model": {
           "type": "string",
-          "description": "[llm] Model identifier. e.g. 'gpt-4o', 'claude-sonnet-4-6'"
+          "description": "Model identifier. e.g. 'gpt-4o', 'claude-sonnet-4-6'"
         },
         "prompt": {
           "type": "string",
-          "description": "[llm] User prompt text. Supports template variables."
+          "description": "User prompt text. Supports template variables."
         },
         "system": {
           "type": "string",
-          "description": "[llm] System prompt text."
-        },
-        "file_op": {
+          "description": "System prompt text. Supports template variables."
+        }
+      }
+    },
+    "FileStep": {
+      "type": "object",
+      "required": [
+        "op",
+        "path"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "op": {
           "type": "string",
-          "description": "[file] File operation to perform.",
+          "description": "File operation to perform.",
           "enum": [
             "read",
             "write",
             "append"
           ]
         },
-        "file_path": {
+        "path": {
           "type": "string",
-          "description": "[file] Path to the target file."
+          "description": "Path to the target file. Supports template variables."
         },
-        "file_content": {
+        "content": {
           "type": "string",
-          "description": "[file] Content to write or append. Supports template variables."
-        },
+          "description": "Content to write or append. Supports template variables."
+        }
+      }
+    },
+    "NotifyStep": {
+      "type": "object",
+      "required": [
+        "channel",
+        "message"
+      ],
+      "additionalProperties": false,
+      "properties": {
         "channel": {
           "type": "string",
-          "description": "[notify] Notification channel. e.g. 'slack', 'email', 'discord'"
+          "description": "Notification channel. e.g. 'slack', 'email', 'discord'"
         },
         "message": {
           "type": "string",
-          "description": "[notify] Notification message. Supports template variables."
+          "description": "Notification message. Supports template variables."
         },
         "to": {
           "type": "string",
-          "description": "[notify] Recipient address or channel ID."
+          "description": "Recipient address or channel ID."
         }
-      },
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "type": {
-                "const": "shell"
-              }
-            }
-          },
-          "then": {
-            "required": [
-              "command"
-            ]
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "type": {
-                "const": "http"
-              }
-            }
-          },
-          "then": {
-            "required": [
-              "url",
-              "method"
-            ]
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "type": {
-                "const": "llm"
-              }
-            }
-          },
-          "then": {
-            "required": [
-              "provider",
-              "model",
-              "prompt"
-            ]
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "type": {
-                "const": "file"
-              }
-            }
-          },
-          "then": {
-            "required": [
-              "file_op",
-              "file_path"
-            ]
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "type": {
-                "const": "notify"
-              }
-            }
-          },
-          "then": {
-            "required": [
-              "channel",
-              "message"
-            ]
-          }
-        }
-      ]
+      }
     },
     "RetryPolicy": {
       "type": "object",
